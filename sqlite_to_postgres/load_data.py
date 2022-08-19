@@ -7,22 +7,7 @@ from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor
 from contextlib import contextmanager
 
-from data_classes import (Filmwork, Genre, GenreFilmwork, PersonFilmwork,
-                          Person)
-
-TABLE_CLASSES = {
-    'film_work': Filmwork,
-    'genre': Genre,
-    'genre_film_work': GenreFilmwork,
-    'person': Person,
-    'person_film_work': PersonFilmwork
-}
-
-TABLES = ['film_work', 'genre', 'genre_film_work', 'person',
-          'person_film_work']
-
-BLOCK_SIZE = 100
-db_path = 'db.sqlite'
+from resources import TABLES, TABLE_CLASSES, BLOCK_SIZE, TABLE_NAME_COLUMN
 
 
 @contextmanager
@@ -56,8 +41,7 @@ class PostgresSaver(SQLiteLoader):
         for block in data:
             values = '\n'.join(['\t'.join([str(x) for x in asdict(obj).values()]) for obj in block])
             with io.StringIO(values) as f:
-                self.curs.copy_from(f, table=self.table_name,
-                                    null='None', size=BLOCK_SIZE)
+                self.curs.copy_from(f, table=self.table_name, null='None', columns=TABLE_NAME_COLUMN[self.table_name], size=BLOCK_SIZE)
 
 
 def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):

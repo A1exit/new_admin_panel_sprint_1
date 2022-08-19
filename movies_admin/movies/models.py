@@ -6,8 +6,8 @@ from django.utils.translation import gettext_lazy as _
 
 
 class TimeStampedMixin(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     class Meta:
         abstract = True
@@ -28,6 +28,7 @@ class Genre(UUIDMixin, TimeStampedMixin, models.Model):
     description = models.TextField(
         _('description'),
         blank=True,
+        null=True
     )
 
     class Meta:
@@ -44,14 +45,19 @@ class Filmwork(UUIDMixin, TimeStampedMixin, models.Model):
     description = models.TextField(
         _('description'),
         blank=True,
+        null=True
     )
-    creation_date = models.DateField(
+    creation_date = models.DateTimeField(
         _('creation date'),
+        auto_now=True,
+        blank=True,
+        null=True
     )
     rating = models.FloatField(
         _('rating'),
         blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
+        null=True
     )
 
     class Type(models.TextChoices):
@@ -69,7 +75,8 @@ class Filmwork(UUIDMixin, TimeStampedMixin, models.Model):
     certificate = models.CharField(
         _('certificate'),
         max_length=512,
-        blank=True
+        blank=True,
+        null=True
     )
     file_path = models.FileField(
         _('file'),
@@ -90,7 +97,11 @@ class Filmwork(UUIDMixin, TimeStampedMixin, models.Model):
 class GenreFilmwork(UUIDMixin, models.Model):
     film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE)
     genre = models.ForeignKey('Genre', on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(
+        auto_now_add=True,
+        blank=True,
+        null=True
+    )
 
     class Meta:
         db_table = "content\".\"genre_film_work"
@@ -121,6 +132,7 @@ class PersonFilmwork(UUIDMixin, models.Model):
     )
     role = models.TextField(
         _('role'),
+        blank=True,
         null=True,
     )
     created = models.DateTimeField(

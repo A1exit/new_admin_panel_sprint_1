@@ -45,7 +45,7 @@ class GenreFilmwork:
 @dataclass
 class Person:
     __slots__ = (
-        'id', 'full_name', 'created_at', 'updated_at'
+        'id', 'full_name', 'created', 'updated_at'
     )
     id: str
     full_name: str
