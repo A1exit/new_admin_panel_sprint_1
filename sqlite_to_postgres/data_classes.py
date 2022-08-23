@@ -1,12 +1,11 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 
 @dataclass
 class Filmwork:
     __slots__ = (
         'id', 'title', 'description', 'creation_date', 'file_path', 'rating',
-        'type',
-        'created_at', 'updated_at'
+        'type', 'created_at', 'updated_at'
     )
     id: str
     title: str

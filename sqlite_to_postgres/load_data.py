@@ -1,13 +1,17 @@
+from sqlite_to_postgres.tests.check_consistency.resources import (
+    BLOCK_SIZE, TABLE_CLASSES, TABLE_NAME_COLUMN, TABLES)
 import io
-
+import os
 import sqlite3
+from contextlib import contextmanager
 from dataclasses import asdict
+
 import psycopg2
+from dotenv import load_dotenv
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor
-from contextlib import contextmanager
 
-from resources import TABLES, TABLE_CLASSES, BLOCK_SIZE, TABLE_NAME_COLUMN
+load_dotenv()
 
 
 @contextmanager
@@ -39,9 +43,15 @@ class SQLiteLoader:
 class PostgresSaver(SQLiteLoader):
     def save_all_data(self, data):
         for block in data:
-            values = '\n'.join(['\t'.join([str(x) for x in asdict(obj).values()]) for obj in block])
+            values = '\n'.join(
+                ['\t'.join([str(x) for x in asdict(obj).values()]) for
+                 obj in block])
             with io.StringIO(values) as f:
-                self.curs.copy_from(f, table=self.table_name, null='None', columns=TABLE_NAME_COLUMN[self.table_name], size=BLOCK_SIZE)
+                self.curs.copy_from(f,
+                                    table=self.table_name,
+                                    null='None',
+                                    columns=TABLE_NAME_COLUMN[self.table_name],
+                                    size=BLOCK_SIZE)
 
 
 def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
@@ -55,13 +65,13 @@ def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
 
 if __name__ == '__main__':
     dsl = {
-        'dbname': 'movies_database',
-        'user': 'app',
-        'password': '123qwe',
-        'host': '127.0.0.1',
-        'port': 5432,
+        'dbname': os.getenv('DB_NAME'),
+        'user': os.getenv('DB_USER'),
+        'password': os.getenv('DB_PASSWORD'),
+        'host': os.getenv('DB_HOST'),
+        'port': os.getenv('DB_PORT'),
         'options': '-c search_path=content'
-           }
+    }
 
     with sqlite3.connect('db.sqlite') as sqlite_conn, psycopg2.connect(
             **dsl, cursor_factory=DictCursor) as pg_conn:
