@@ -2,6 +2,7 @@ import uuid
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import UniqueConstraint
 from django.utils.translation import gettext_lazy as _
 
 
@@ -124,8 +125,16 @@ class PersonFilmwork(UUIDMixin, models.Model):
     person = models.ForeignKey(
         'Person', on_delete=models.CASCADE,
     )
-    role = models.TextField(
+
+    class Role(models.TextChoices):
+        actor = 'actor'
+        director = 'director'
+        screenwriter = 'screenwriter'
+
+    role = models.CharField(
         _('role'),
+        max_length=12,
+        choices=Role.choices,
         blank=True,
         null=True,
     )
@@ -135,3 +144,7 @@ class PersonFilmwork(UUIDMixin, models.Model):
 
     class Meta:
         db_table = "content\".\"person_film_work"
+        UniqueConstraint(
+            fields=['film_work_id', 'person_id', 'role'],
+            name='unique_film_work_person_role'
+        )

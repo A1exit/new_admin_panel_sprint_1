@@ -1,66 +1,32 @@
-from sqlite_to_postgres.tests.check_consistency.resources import (
-    BLOCK_SIZE, TABLE_CLASSES, TABLE_NAME_COLUMN, TABLES)
-import io
 import os
 import sqlite3
-from contextlib import contextmanager
-from dataclasses import asdict
 
 import psycopg2
 from dotenv import load_dotenv
+from loader_clsss import PostgresSaver, SQLiteLoader
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor
+
+from sqlite_to_postgres.resources import TABLE_CLASSES
 
 load_dotenv()
 
 
-@contextmanager
-def conn_context(db_path: str):
-    conn = sqlite3.connect(db_path)
-    yield conn
-    conn.close()
-
-
-class SQLiteLoader:
-    def __init__(self, conn: sqlite3.Connection, table_name):
-        self.connection = conn
-        self.table_name = table_name
-        self.curs = self.connection.cursor()
-
-    def load_movies(self):
-        self.curs.execute(f'SELECT * FROM {self.table_name};')
-        while True:
-            data = self.curs.fetchmany(size=BLOCK_SIZE)
-            if not data:
-                break
-            result = []
-            for _ in data:
-                obj = TABLE_CLASSES[self.table_name](*_)
-                result.append(obj)
-            yield result
-
-
-class PostgresSaver(SQLiteLoader):
-    def save_all_data(self, data):
-        for block in data:
-            values = '\n'.join(
-                ['\t'.join([str(x) for x in asdict(obj).values()]) for
-                 obj in block])
-            with io.StringIO(values) as f:
-                self.curs.copy_from(f,
-                                    table=self.table_name,
-                                    null='None',
-                                    columns=TABLE_NAME_COLUMN[self.table_name],
-                                    size=BLOCK_SIZE)
-
-
 def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
     """Основной метод загрузки данных из SQLite в Postgres"""
-    for table_name in TABLES:
-        sqlite_loader = SQLiteLoader(connection, table_name)
-        data = sqlite_loader.load_movies()
-        postgres_saver = PostgresSaver(pg_conn, table_name)
-        postgres_saver.save_all_data(data)
+    for table_name, data_class in TABLE_CLASSES.items():
+        try:
+            sqlite_loader = SQLiteLoader(connection, table_name, data_class)
+            data = sqlite_loader.load_movies()
+        except sqlite3.IntegrityError:
+            print("couldn't add Python twice")
+            break
+        try:
+            postgres_saver = PostgresSaver(pg_conn, table_name, data_class)
+            postgres_saver.save_all_data(data)
+        except sqlite3.IntegrityError:
+            print("couldn't add Python twice")
+            break
 
 
 if __name__ == '__main__':
@@ -76,3 +42,6 @@ if __name__ == '__main__':
     with sqlite3.connect('db.sqlite') as sqlite_conn, psycopg2.connect(
             **dsl, cursor_factory=DictCursor) as pg_conn:
         load_from_sqlite(sqlite_conn, pg_conn)
+
+    sqlite_conn.close()
+    pg_conn.close()

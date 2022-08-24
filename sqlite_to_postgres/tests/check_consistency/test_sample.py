@@ -1,11 +1,12 @@
-from sqlite_to_postgres.tests.check_consistency.resources import \
-    TABLE_NAME_REQUEST, TABLES, TABLE_CLASSES
 import os
 import sqlite3
 
 import psycopg2
 from dotenv import load_dotenv
 from psycopg2.extras import DictCursor
+
+from sqlite_to_postgres.resources import (TABLE_CLASSES, TABLE_NAME_REQUEST,
+                                          TABLES)
 
 load_dotenv()
 
@@ -68,5 +69,5 @@ def test_matching_records():
 
 
 if __name__ == '__main__':
-    # test_matching_records()
+    test_matching_records()
     test_count_reqords()
