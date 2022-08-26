@@ -136,7 +136,6 @@ class PersonFilmwork(UUIDMixin, models.Model):
         max_length=12,
         choices=Role.choices,
         blank=True,
-        null=True,
     )
     created_at = models.DateTimeField(
         auto_now_add=True,

@@ -16,8 +16,6 @@ class SQLiteLoader:
         self.curs.execute(f'SELECT {", ".join(self.data_class.__slots__)} '
                           f'FROM {self.table_name};')
         while data := self.curs.fetchmany(size=BLOCK_SIZE):
-            if not data:
-                break
             yield [self.data_class(*row) for row in data]
 
 
